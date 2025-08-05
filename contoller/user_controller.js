@@ -49,7 +49,7 @@ export const login = async(request,response,next)=>{
   secure: false, // use true in production with https
   sameSite: "lax"
 });
-console.log("isEmail = ",isEmail);
+// console.log("isEmail = ",isEmail);
 
        return response.status(201).json({message:"Login Successful",user:isEmail});
 

@@ -7,6 +7,7 @@ import cors from "cors";
 import UserBehaviorRouter from "./routes/userbehavior_routes.js";
 import AdminRouter from "./routes/admin_routes.js";
 import PredictRouter from "./routes/prediction_routes.js";
+import ContactRouter from "./routes/contact_routes.js";
 let app = express();
 import dotenv from 'dotenv';
 dotenv.config();
@@ -17,14 +18,15 @@ mongoose.connect(process.env.DB_URL).then(()=>{
     app.use(bodyParser.json());
     app.use(cookieParser());   
     app.use(cors({
-  origin: "http://localhost:5173",  // your frontend
+  origin: ["http://localhost:5173","https://manobhav-ui.onrender.com"] , // your frontend
   credentials: true                 // This allows cookies to be sent
 }))
 
     app.use("/admin",AdminRouter);
     app.use("/user",UserRouter);
     app.use("/userbehaviour",UserBehaviorRouter);
-    app.use("/predict",PredictRouter)
+    app.use("/predict",PredictRouter);
+    app.use("/contact",ContactRouter);
    
     app.listen(process.env.PORT,()=>{
         console.log("Server Started...");        
