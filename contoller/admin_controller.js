@@ -109,7 +109,7 @@ let mailOptions = {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: background-color 0.3s ease;"
- href="http://localhost:3000/admin/verification?token=${token}">Verifcation</a>
+ href="https://manobhav-ui.onrender.com/admin/verification?token=${token}">Verifcation</a>
  <br><br></div>`
 };
 
