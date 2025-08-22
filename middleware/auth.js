@@ -8,7 +8,7 @@ export const auth = (request,response,next)=>{
         let{token} = request.cookies;
    
         if(!token)
-            return response.status(404).json({message:"Invalide user"});
+            return response.status(404).json({message:"Invalide Admin"});
     
        let decode = jwt.verify(token,process.env.Admin_Key);
     //    console.log("\n\ndecode = ",decode);
@@ -24,7 +24,7 @@ export const auth = (request,response,next)=>{
 export const authuser = (request,response,next)=>{
     try {
         let{token} = request.cookies;
-        console.log(token);
+        console.log("auth token = ",token);
         console.log("Key = ",process.env.SECRET_KEY)
         
         if(!token)
