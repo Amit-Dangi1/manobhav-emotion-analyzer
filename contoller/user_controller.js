@@ -185,7 +185,7 @@ let mailOptions = {
 
   <!-- Verification Button -->
   <p style="text-align:center; margin:30px 0;">
-    <a href="http://localhost:3000/user/verification?token=${token}" 
+    <a href="https://manobhav-emotion-analyzer.onrender.com/user/verification?token=${token}" 
        style="
          padding:12px 24px;
          background-color:#3dbec4;

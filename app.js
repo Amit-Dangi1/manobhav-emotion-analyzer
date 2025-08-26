@@ -21,7 +21,7 @@ mongoose.connect(process.env.DB_URL).then(()=>{
     app.use(bodyParser.json());
     app.use(cookieParser());   
     app.use(cors({
-  origin: "http://localhost:5173", // your frontend
+  origin: "https://manobhav-ui.onrender.com", // your frontend
   credentials: true                 // This allows cookies to be sent
 }))
 
