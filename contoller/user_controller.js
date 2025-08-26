@@ -3,6 +3,8 @@ import { User } from "../model/user_model.js";
 import bcrypt  from "bcrypt";
 import jwt from "jsonwebtoken";
 import { response } from "express";
+import nodemailer from "nodemailer";
+
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -20,10 +22,8 @@ export const create = async(request,response,next)=>{
         if(isEmail)
             return response.status(409).json({message:"Email already exists"});
 
-        let salt = await bcrypt.genSalt(12);
-        password = await bcrypt.hash(password,salt);
-        const user = await User.create({name,email,password,age});
-         return response.status(201).json({message:"SignUp Successfull"});
+        sendEmail(email,name,usertokengenerate(name,email,password,age))
+         return response.status(201).json({message:"We’ve sent a verification email to your email Id. Please check your inbox"});
     } catch (error) {
         console.log(error);
         return response.status(500).json({message:"Internal Server Error"});
@@ -133,3 +133,110 @@ function generateToken(_id,email){
 
     return token;
 };
+
+// -----------------------------------------------
+
+
+export const verified = async(request,response,next)=>{
+    try {
+        let{token} = request.query;
+        let decode = jwt.verify(token,process.env.SECRET_KEY);
+        let{name,email,password,age} = decode;
+
+        let salt = await bcrypt.genSalt(12);
+        password = bcrypt.hashSync(password,salt);
+        let user = await User.create({name,email,password,age});
+        if(!user)
+        return response.status(201).json({message:"User Signup  Failed"})
+        return response.status(201).json({message:"User Signup Succesfull"})
+         
+     } catch (error) {
+        console.log(error);
+        return response.status(500).json({message:"Internal Server Errro"})
+        
+    }
+};
+
+let sendEmail = (email,name,token)=>{
+     return new Promise((resolve,reject)=>{
+let transporter = nodemailer.createTransport({
+    
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.EMAIL_PASSWORD
+  }
+});
+
+let mailOptions = {
+  from: process.env.EMAIL,
+  to: email,
+  subject: 'Account Verification',
+  html:  `<div style="font-family: 'Segoe UI', sans-serif; max-width:600px; margin:auto; padding:20px; border:2px solid silver; border-radius:10px; background-color:#f9f9f9;">
+  
+  <!-- Greeting -->
+  <p style="color:black; text-align:center; margin-bottom:20px; font-size:16px;">
+    Dear <span style="font-family:'Helvetica Neue', Arial, sans-serif; font-weight:700; color:#3dbec4; font-size:20px;">
+      ${name}
+    </span>,<br>
+    Thank you for registering with <strong>MANOBHAV</strong>! 🎉<br>
+    To verify your account, please click the button below:
+  </p>
+
+  <!-- Verification Button -->
+  <p style="text-align:center; margin:30px 0;">
+    <a href="http://localhost:3000/user/verification?token=${token}" 
+       style="
+         padding:12px 24px;
+         background-color:#3dbec4;
+         color:white;
+         text-decoration:none;
+         border-radius:20px;
+         font-size:16px;
+         font-weight:500;
+         box-shadow:0 4px 10px rgba(0,0,0,0.1);
+         display:inline-block;
+         transition: background-color 0.3s ease;
+       "
+       onmouseover="this.style.backgroundColor='#35a9b0'" 
+       onmouseout="this.style.backgroundColor='#3dbec4'">
+      Verify Account
+    </a>
+  </p>
+
+ 
+
+  <!-- Additional Info -->
+  <p style="color:#555; font-size:14px; text-align:center;">
+    By verifying your account, you can securely access your personalized dashboard, track your progress, and use all features MANOBHAV offers.
+  </p>
+
+  <p style="color:#555; font-size:14px; text-align:center;">
+    If you did not register for MANOBHAV, please ignore this email.
+  </p>
+
+  <!-- Signature -->
+  <p style="color:#888; font-size:14px; text-align:center; margin-top:30px;">
+    Best regards,<br>
+    <strong>MANOBHAV Team</strong>
+  </p>
+
+</div>
+`
+};
+
+transporter.sendMail(mailOptions, function(error, info){
+  if (error) {
+    console.log(error);
+    reject(error)
+  } else {
+    console.log('Email sent: ' + info.response);
+    resolve(true);
+  }
+})})};
+
+function usertokengenerate(name,email,password,age){
+    let payload = {name,email,password,age}
+    let token =  jwt.sign(payload,process.env.SECRET_KEY);
+    return token;
+}
