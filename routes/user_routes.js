@@ -1,5 +1,5 @@
 import express from "express";
-import { create, getUser, login, logout, userdelete, userupdate, verified } from "../contoller/user_controller.js";
+import { create, getUser, login, logout, passwordSet, updatepassword, userdelete, userupdate, verified} from "../contoller/user_controller.js";
 import { body } from "express-validator";
 import { auth, authuser } from "../middleware/auth.js";
 
@@ -13,6 +13,7 @@ router.get("/verification",verified);
 
 router.post("/login",login);
 router.get("/logout",authuser ,logout);
+router.get("/password/set-password2",updatepassword);
 
 router.get("/:userId",authuser,getUser);
 
@@ -20,5 +21,8 @@ router.put("/:userId",body("name","name required").notEmpty(),body("email","emai
 body("email","Invalid email").isEmail(),body("age","age required").notEmpty(),authuser,userupdate);
 
 router.delete("/:userId",authuser,userdelete);
+router.post("/setpassword",body("email","email is required").notEmpty(),body("password","password is requird").notEmpty(),passwordSet);
+ 
+
 
 export default router;

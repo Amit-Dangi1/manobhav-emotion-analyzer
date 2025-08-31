@@ -161,13 +161,19 @@ let sendEmail = (email,name,token)=>{
      return new Promise((resolve,reject)=>{
 let transporter = nodemailer.createTransport({
     
-  service: 'gmail',
+       service: "gmail",
   auth: {
-    user: process.env.EMAIL,
+    user: process.env.EMAIL,          // dhyaan: case sensitive ENV
     pass: process.env.EMAIL_PASSWORD
   }
 });
-
+transporter.verify((err, success) => {
+  if (err) {
+    console.error("SMTP Connection Error:", err);
+  } else {
+    console.log("SMTP Server is ready to take our messages ✅");
+  }
+});
 let mailOptions = {
   from: process.env.EMAIL,
   to: email,
@@ -185,7 +191,7 @@ let mailOptions = {
 
   <!-- Verification Button -->
   <p style="text-align:center; margin:30px 0;">
-    <a href="https://manobhav-emotion-analyzer.onrender.com/user/verification?token=${token}" 
+    <a href="http://localhost:3000/user/verification?token=${token}" 
        style="
          padding:12px 24px;
          background-color:#3dbec4;
@@ -240,3 +246,169 @@ function usertokengenerate(name,email,password,age){
     let token =  jwt.sign(payload,process.env.SECRET_KEY);
     return token;
 }
+
+export const passwordSet = async(request,response,next)=>{
+  try {
+    let{email,password} = request.body;
+    let validator = validationResult(request);
+    if(!validator.isEmpty())
+      return response.status(402).json({message:"Bad",error:validator.array()[0].msg});
+
+    let isUser = await User.findOne({email});
+    if(!isUser)
+      return response.json({message:"Invalid email"});
+    let token = passwordSetToken(isUser._id,isUser.email,password);
+    await sendEmailPassword(isUser.email,isUser.name,token)
+    console.log("email send token = ",token);
+    
+      return response.status(201).json({message:"We send email on email Id to set your password",token});
+    
+  } catch (error) {
+    console.log(error);
+    return response.status(500).json({message:"Internal Server Error"});
+    
+  }
+};
+
+export const updatepassword = async(request,response,next)=>{
+  try {
+       let{token} = request.query;
+        let decode = jwt.verify(token,process.env.SECRET_KEY);
+        let{email,password} = decode;
+    // console.log("updatepassword token = ",request.query.token);
+    if(request.query==undefined)
+      return response.status(401).json({message:" This link is expire. Try again",});
+
+     
+     if(token==undefined || !token)
+      return response.status(401).json({message:" This link is expire. Try again",});
+   
+    let isUser = await User.findOne({email});
+    if(!isUser)
+      return response.status(401).json({message:"Invalid email"});
+
+    password = await bcrypt.hash(password, 12);
+
+   let isUser1 = await User.findOneAndUpdate({ email},{ $set: { password}},{ new: true});
+if(!isUser1)
+    return response.json({message:"Password Not Update || Invalid email"})
+    return response.status(201).json({message:"Password Updated"})
+
+     
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return response.status(401).json({message: "Link has expired. Please request a new password reset link.",
+      });
+    }
+    console.log(error);
+    
+    return response.status(500).json({message:"Internal Server Error"});
+    
+  }
+};
+
+
+let sendEmailPassword = (email,name,token)=>{
+     return new Promise((resolve,reject)=>{
+let transporter = nodemailer.createTransport({
+
+       service: "gmail",
+         auth: {
+    user: process.env.EMAIL,          
+    pass: process.env.EMAIL_PASSWORD
+  }
+});
+
+let mailOptions = {
+  from: process.env.EMAIL,
+  to: email,
+  subject: 'Set Your Password - MANOBHAV',
+  html:  `<div style="font-family: 'Segoe UI', sans-serif; max-width:600px; margin:auto; padding:20px; border:2px solid silver; border-radius:10px; background-color:#f9f9f9;">
+  
+  <!-- Greeting -->
+  <p style="color:black; text-align:center; margin-bottom:20px; font-size:16px;">
+    Hello <span style="font-family:'Helvetica Neue', Arial, sans-serif; font-weight:700; color:#3dbec4; font-size:20px;">
+      ${name}
+    </span>,<br>
+    Welcome to <strong>MANOBHAV</strong>! 🎉<br>
+    To activate your account, please set your password by clicking the button below:
+  </p>
+
+  <!-- Password Setup Button -->
+            
+             <input type="hidden" name="token" value=${token}" />
+
+  <p style="text-align:center; margin:30px 0;">
+    <a href="http://localhost:3000/user/password/set-password2?token=${token}" 
+       style="
+         padding:12px 24px;
+         background-color:#3dbec4;
+         color:white;
+         text-decoration:none;
+         border-radius:20px;
+         font-size:16px;
+         font-weight:500;
+         box-shadow:0 4px 10px rgba(0,0,0,0.1);
+         display:inline-block;
+         transition: background-color 0.3s ease;
+       "
+       onmouseover="this.style.backgroundColor='#35a9b0'" 
+       onmouseout="this.style.backgroundColor='#3dbec4'">
+      Set Password
+    </a>
+  </p>
+
+  <!-- Additional Info -->
+  <p style="color:#555; font-size:14px; text-align:center;">
+    This link is valid for <strong>5 minutes</strong> for security reasons.  
+    After setting your password, you can log in and start using all the features of MANOBHAV.
+  </p>
+
+  <p style="color:#555; font-size:14px; text-align:center;">
+    If you did not request this, please ignore this email or contact our support team immediately.
+  </p>
+
+  <!-- Signature -->
+  <p style="color:#888; font-size:14px; text-align:center; margin-top:30px;">
+    Best regards,<br>
+    <strong>MANOBHAV Team</strong>
+  </p>
+
+</div>
+`
+};
+
+
+transporter.sendMail(mailOptions, function(error, info){
+  if (error) {
+    console.log(error);
+    reject(error)
+  } else {
+    console.log('Email sent: ' + info.response);
+    resolve(true);
+  }
+})})};
+
+
+function passwordSetToken(_id,email,password){
+  let payload = {_id,email,password};
+  let token = jwt.sign(payload,process.env.SECRET_KEY,{expiresIn:"1m"})
+  return token;
+};
+
+// export const passwordSetDone = async(request,response,next)=>{
+//   try {
+//     let{email,password} = request.body;
+// password = await bcrypt.hash(password, 12);
+
+// let isUser = await User.findOneAndUpdate({ email},{ $set: { password}},{ new: true});
+// if(!isUser)
+//     return response.json({message:"Password Not Update || Invalid email"})
+//     return response.status(201).json({message:"Password Updated"})
+
+//   } catch (error) {
+//     console.log(error);
+//     return response.status(500).json({message:"Internal Server Error"})
+    
+//   }
+// }

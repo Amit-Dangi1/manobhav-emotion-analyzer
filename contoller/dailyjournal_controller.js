@@ -28,7 +28,7 @@ export const getAll = async(request,response,next)=>{
         
         let entrydata = await DailyJournal.findOne({userId:_id});
         if(!entrydata)
-        return response.status(404).json({message:"No Entry Found"})
+        return response.status(200).json({message:"No Entry Found"})
 
         console.log(entrydata);
         
