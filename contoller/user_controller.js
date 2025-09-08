@@ -191,7 +191,7 @@ let mailOptions = {
 
   <!-- Verification Button -->
   <p style="text-align:center; margin:30px 0;">
-    <a href="https://manobhav-emotion-analyzer.onrender.com/user/verification?token=${token}" 
+    <a href="http://localhost:3000/user/verification?token=${token}" 
        style="
          padding:12px 24px;
          background-color:#3dbec4;
@@ -339,7 +339,7 @@ let mailOptions = {
              <input type="hidden" name="token" value=${token}" />
 
   <p style="text-align:center; margin:30px 0;">
-    <a href="https://manobhav-emotion-analyzer.onrender.com/user/password/set-password2?token=${token}" 
+    <a href="http://localhost:3000/user/password/set-password2?token=${token}" 
        style="
          padding:12px 24px;
          background-color:#3dbec4;
@@ -392,7 +392,7 @@ transporter.sendMail(mailOptions, function(error, info){
 
 function passwordSetToken(_id,email,password){
   let payload = {_id,email,password};
-  let token = jwt.sign(payload,process.env.SECRET_KEY,{expiresIn:"1m"})
+  let token = jwt.sign(payload,process.env.SECRET_KEY,{expiresIn:"5m"})
   return token;
 };
 
